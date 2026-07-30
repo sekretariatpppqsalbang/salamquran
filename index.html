@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SALAM Quran - SDIT Salsabila 3 Banguntapan</title>
+    <meta name="theme-color" content="#00C2A0" />
+    <meta name="description" content="Sistem Informasi & Input Laporan Hasil Hafalan Siswa SDIT Salsabila 3 Banguntapan" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" type="image/svg+xml" href="/icon-192.svg" />
+    <link rel="apple-touch-icon" href="/icon-192.svg" />
+  </head>
+  <body class="bg-[#FDFDFD] text-[#3F4E5A] antialiased selection:bg-[#00C2A0]/20 selection:text-[#00C2A0]">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('PWA ServiceWorker registered:', reg.scope))
+            .catch(err => console.log('PWA ServiceWorker registration failed:', err));
+        });
+      }
+    </script>
+  </body>
+</html>
+

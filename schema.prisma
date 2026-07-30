@@ -1,0 +1,103 @@
+// This is your Prisma schema file for SALAM Quran
+// SDIT Salsabila 3 Banguntapan
+// Connects to PostgreSQL (Supabase / Neon DB / Cloud SQL)
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  GURU
+  WALI
+  ADMIN
+}
+
+enum LessonType {
+  TAHSIN
+  TAHFIDZ
+}
+
+enum Grade {
+  MUMTAZ         // A (Mumtaz)
+  JAYYID_JIDDAN  // A- (Jayyid Jiddan)
+  JAYYID         // B (Jayyid)
+}
+
+model User {
+  id           String    @id @default(uuid())
+  username     String    @unique
+  passwordHash String
+  name         String
+  role         Role      @default(GURU)
+  isFirstLogin Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Relations if Guru
+  tahsinLogs   TahsinLog[]  @relation("GuruTahsinLogs")
+  tahfidzLogs  TahfidzLog[] @relation("GuruTahfidzLogs")
+}
+
+model Class {
+  id        String    @id @default(uuid())
+  name      String    @unique // e.g., '1A', '1B', '2A'
+  createdAt DateTime  @default(now())
+  
+  students  Student[]
+}
+
+model Student {
+  id        String   @id @default(uuid())
+  name      String
+  classId   String
+  class     Class    @relation(fields: [classId], references: [id])
+  createdAt DateTime @default(now())
+
+  tahsinLogs  TahsinLog[]
+  tahfidzLogs TahfidzLog[]
+
+  @@unique([name, classId])
+}
+
+model TahsinLog {
+  id          String   @id @default(uuid())
+  date        DateTime @default(now())
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  guruId      String
+  guru        User     @relation("GuruTahsinLogs", fields: [guruId], references: [id])
+  
+  jilid       String   // Jilid 1-5, Al-Qur'an
+  halaman     String   // e.g., "15" or "15-20"
+  grade       Grade
+  pencapaian  String
+  keterangan  String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model TahfidzLog {
+  id          String   @id @default(uuid())
+  date        DateTime @default(now())
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  guruId      String
+  guru        User     @relation("GuruTahfidzLogs", fields: [guruId], references: [id])
+  
+  juz         Int      // 1-30
+  surahNo     Int      // 1-114
+  surahName   String
+  rentangAyat String   // e.g., "1-15"
+  grade       Grade
+  pencapaian  String
+  keterangan  String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

@@ -1,0 +1,25 @@
+{
+  "short_name": "SALAM Quran",
+  "name": "SALAM Quran - SDIT Salsabila 3 Banguntapan",
+  "description": "Sistem Informasi & Input Laporan Hasil Hafalan Siswa SDIT Salsabila 3 Banguntapan",
+  "icons": [
+    {
+      "src": "/icon-192.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#FFFFFF",
+  "theme_color": "#00C2A0",
+  "display": "standalone",
+  "orientation": "portrait",
+  "categories": ["education", "productivity"]
+}
