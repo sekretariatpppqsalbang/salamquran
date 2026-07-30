@@ -1,3 +1,5 @@
+'use client';
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, UserRole } from '../types';
 import { checkUserPassword, getTeachers, getStudents, isDefaultPassword, saveUserPassword } from '../services/storageService';

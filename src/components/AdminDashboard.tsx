@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { getTeachers, addTeacher, getStudents, addStudent, resetUserPassword } from '../services/storageService';
 import { CLASSES_LIST } from '../data/students';

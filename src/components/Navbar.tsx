@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { BookOpen, LogOut, KeyRound, User as UserIcon, ShieldAlert } from 'lucide-react';

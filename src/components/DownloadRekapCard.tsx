@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { CLASSES_LIST } from '../data/students';
 import { exportRekapGuru } from '../services/storageService';
