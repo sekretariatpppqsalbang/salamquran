@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { CLASSES_LIST } from '../data/students';
 import { SURAHS } from '../data/surahs';
-import { getStudents, getQuranLogs, saveQuranLog, deleteQuranLog } from '../services/storageService';
+import { getStudents, getQuranLogs, fetchQuranLogsFromSupabase, saveQuranLog, deleteQuranLog } from '../services/storageService';
 import { QuranLog, Grade, YanfaunaJilid, LessonType } from '../types';
 import { DownloadRekapCard } from './DownloadRekapCard';
 import { 
@@ -67,6 +67,11 @@ export const GuruDashboard: React.FC = () => {
 
   useEffect(() => {
     setLogs(getQuranLogs());
+    fetchQuranLogsFromSupabase().then((remoteLogs) => {
+      if (remoteLogs && remoteLogs.length > 0) {
+        setLogs(remoteLogs);
+      }
+    });
   }, []);
 
   const handleSave = (e: React.FormEvent) => {

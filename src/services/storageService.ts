@@ -124,6 +124,29 @@ export function addStudent(student: Omit<Student, 'id'>): Student {
 }
 
 // QURAN LOGS DATA
+export async function fetchQuranLogsFromSupabase(): Promise<QuranLog[]> {
+  try {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('quran_logs')
+      .select('*')
+      .order('createdAt', { ascending: false });
+
+    if (error) {
+      console.warn('Notice loading from Supabase Cloud:', error.message);
+      return getQuranLogs();
+    }
+
+    if (data && Array.isArray(data)) {
+      localStorage.setItem(LOGS_KEY, JSON.stringify(data));
+      return data as QuranLog[];
+    }
+  } catch (err: any) {
+    console.warn('Supabase cloud query notice:', err);
+  }
+  return getQuranLogs();
+}
+
 export function getQuranLogs(): QuranLog[] {
   const data = localStorage.getItem(LOGS_KEY);
   if (!data) {
