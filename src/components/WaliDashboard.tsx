@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { getQuranLogs, fetchQuranLogsFromSupabase } from '../services/storageService';
+import { getQuranLogs, fetchQuranLogsFromSupabase, subscribeQuranLogs } from '../services/storageService';
 import { QuranLog } from '../types';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -41,11 +41,12 @@ export const WaliDashboard: React.FC = () => {
 
   useEffect(() => {
     setLogs(getQuranLogs());
-    fetchQuranLogsFromSupabase().then((remoteLogs) => {
-      if (remoteLogs && remoteLogs.length > 0) {
-        setLogs(remoteLogs);
-      }
+    const unsubscribe = subscribeQuranLogs((latestLogs) => {
+      setLogs(latestLogs);
     });
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   // Filter logs specifically for this child

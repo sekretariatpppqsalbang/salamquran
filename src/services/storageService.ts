@@ -123,7 +123,17 @@ export function addStudent(student: Omit<Student, 'id'>): Student {
   return newStudent;
 }
 
-// QURAN LOGS DATA
+// QURAN LOGS DATA & REALTIME SYNC
+type LogListener = (logs: QuranLog[]) => void;
+const logListeners: Set<LogListener> = new Set();
+
+function notifyLogListeners(logs: QuranLog[]) {
+  logListeners.forEach(fn => fn(logs));
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('salam_quran_logs_updated', { detail: logs }));
+  }
+}
+
 export async function fetchQuranLogsFromSupabase(): Promise<QuranLog[]> {
   try {
     const supabase = getSupabase();
@@ -166,6 +176,66 @@ export function getQuranLogs(): QuranLog[] {
   }
 }
 
+export function subscribeQuranLogs(callback: LogListener): () => void {
+  logListeners.add(callback);
+
+  // Initial fetch from remote
+  fetchQuranLogsFromSupabase().then((remoteLogs) => {
+    callback(remoteLogs);
+  });
+
+  // Supabase Real-time postgres_changes subscription
+  let channel: any = null;
+  try {
+    const supabase = getSupabase();
+    channel = supabase
+      .channel('quran_logs_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'quran_logs' },
+        async () => {
+          const freshLogs = await fetchQuranLogsFromSupabase();
+          callback(freshLogs);
+        }
+      )
+      .subscribe();
+  } catch (err) {
+    console.warn('Supabase Realtime channel setup notice:', err);
+  }
+
+  // Periodic polling fallback (every 3 seconds) for instant online synchronization across all devices
+  const intervalId = setInterval(async () => {
+    const freshLogs = await fetchQuranLogsFromSupabase();
+    callback(freshLogs);
+  }, 3000);
+
+  // Cross-tab local event handler
+  const handleLocalEvent = (e: any) => {
+    if (e.detail) {
+      callback(e.detail);
+    } else {
+      callback(getQuranLogs());
+    }
+  };
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('salam_quran_logs_updated', handleLocalEvent);
+  }
+
+  return () => {
+    logListeners.delete(callback);
+    if (channel) {
+      try {
+        channel.unsubscribe();
+      } catch {}
+    }
+    clearInterval(intervalId);
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('salam_quran_logs_updated', handleLocalEvent);
+    }
+  };
+}
+
 export function saveQuranLog(log: Omit<TahsinLog, 'id' | 'createdAt'> | Omit<TahfidzLog, 'id' | 'createdAt'>): QuranLog {
   const logs = getQuranLogs();
   const newLog: QuranLog = {
@@ -176,6 +246,7 @@ export function saveQuranLog(log: Omit<TahsinLog, 'id' | 'createdAt'> | Omit<Tah
   
   logs.unshift(newLog); // latest first
   localStorage.setItem(LOGS_KEY, JSON.stringify(logs));
+  notifyLogListeners(logs);
 
   // Sync with Supabase asynchronously (background sync)
   (async () => {
@@ -185,6 +256,8 @@ export function saveQuranLog(log: Omit<TahsinLog, 'id' | 'createdAt'> | Omit<Tah
         console.warn('Supabase sync notice:', error.message);
       } else {
         console.log('Successfully synced log to Supabase Cloud:', newLog.id);
+        const updated = await fetchQuranLogsFromSupabase();
+        notifyLogListeners(updated);
       }
     } catch (err: any) {
       console.warn('Supabase async sync failed:', err);
@@ -197,12 +270,15 @@ export function saveQuranLog(log: Omit<TahsinLog, 'id' | 'createdAt'> | Omit<Tah
 export function deleteQuranLog(id: string) {
   const logs = getQuranLogs().filter(l => l.id !== id);
   localStorage.setItem(LOGS_KEY, JSON.stringify(logs));
+  notifyLogListeners(logs);
 
   // Remove from Supabase asynchronously
   (async () => {
     try {
       const { error } = await getSupabase().from('quran_logs').delete().eq('id', id);
       if (error) console.warn('Supabase delete notice:', error.message);
+      const updated = await fetchQuranLogsFromSupabase();
+      notifyLogListeners(updated);
     } catch (err: any) {
       console.warn('Supabase async delete error:', err);
     }
